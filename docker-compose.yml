@@ -1,0 +1,28 @@
+version: '3.8'
+
+name: bda
+
+services:
+  bda:
+    container_name: ${COMPOSE_PROJECT_NAME}
+    image: zdeneklapes/${COMPOSE_PROJECT_NAME}:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./tmp/fish/:/root/.local/share/fish/ # Mount the fish shell history, to remain files when docker container is rebuild: This will create ./tmp/fish/ folder in the project directory if it doesn't exist already
+      - ./tmp/tmp:/tmp/
+      - ./:/app/
+      - /app/node_modules # NOTE: Store node_modules in the container, so it's not shared between different containers
+    stdin_open: true
+    tty: true
+    ports:
+      - 24012:24012
+    depends_on:
+      - blockchain
+  blockchain:
+    container_name: ${COMPOSE_PROJECT_NAME}-blockchain
+    image: trufflesuite/ganache
+    entrypoint: ["node", "/app/dist/node/cli.js", "--server.host=0.0.0.0"]
+    ports:
+      - 8545:8545
