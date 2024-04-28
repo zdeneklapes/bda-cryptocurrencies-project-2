@@ -2,11 +2,11 @@
 const MultiSigWalletConf = Object.freeze({
     NUMBER_OF_OWNERS: 2, // m
     REQUIRED_SIGS: 2, // n
-    NAME: "ERC20Token",
-    SYMBOL: "BDA_TOKEN",
-    CAP: 1000000,
+    NAME: "BDAToken",
+    SYMBOL: "BT",
+    CAP: 10_000_000,
     TMAX: 100,
-    TRANSFER_LIMIT: 1000,
+    TRANSFER_LIMIT: 100,
 })
 
 module.exports = MultiSigWalletConf;

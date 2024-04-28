@@ -24,6 +24,7 @@ module.exports = function (deployer, network, accounts) {
         }
     }
 
+    const tokenName = conf.NAME;
     console.log('Deploying BDAToken to network', network);
     console.log("\t --owners: ", owners, ";\n\t --required signatures", conf.REQUIRED_SIGS);
 
@@ -35,25 +36,6 @@ module.exports = function (deployer, network, accounts) {
         conf.CAP,
         conf.TRANSFER_LIMIT,
     ).then(() => {
-        console.log('Deployed ModifiedERC20Token with address', BDAToken.address);
+        // console.log('Deployed BDAToken with address', BDAToken.address);
     });
 };
-
-// anybody can deploy contract - e.g., address[0]
-// result = deployer.deploy(ModifiedERC20Token, owners, conf.REQUIRED_SIGS, { from: accounts[0], gas: 2 * 1000 * 1000 }).then(() => {
-
-// console.log('Deployed MultiSigWallet with address', MultiSigWallet.address);
-// console.log("\t \\/== Default gas limit:", MultiSigWallet.class_defaults.gas);
-
-// NOTES
-//
-// var W3 = require('web3');
-//
-// MultiSigWallet.deployed().then(function(instance){return instance.getOwners()});
-// MultiSigWallet.deployed().then(function(instance){return instance.getOwners.call()});
-
-// Access migrated instance of contract
-// MultiSigWallet.deployed().then(function(instance) {console.log(instance); });
-
-// Get balance of contract
-// W3.utils.fromWei(web3.eth.getBalance('... some address of contract...').toString(), 'ether');

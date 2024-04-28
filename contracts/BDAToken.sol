@@ -9,46 +9,99 @@ import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract Admin {
-    address internal owner;
+    // Variables
     EnumerableSet.AddressSet internal admins;
+    mapping(bytes32 => EnumerableSet.AddressSet) internal addAdminSignatures;
+    mapping(bytes32 => EnumerableSet.AddressSet) internal removeAdminSignatures;
 
-    constructor(address _owner) {
-        owner = msg.sender;
-        EnumerableSet.add(admins, _owner);
+    // Constructor
+    constructor(address firstAdmin) {
+        EnumerableSet.add(admins, firstAdmin);
     }
 
-    function addAdmin(address newAdmin) public {
-        require(msg.sender == owner, "Only owner can add mint admins");
-        EnumerableSet.add(admins, newAdmin);
+    // Events
+    event SingAddAdmin(
+        address indexed newAdmin,
+        address indexed signer,
+        uint256 adminCount,
+        uint256 signatureCount,
+        bool isApproved
+    );
+    event SingRemoveAdmin(
+        address indexed removedAdmin,
+        address indexed signer,
+        uint256 adminCount,
+        uint256 signatureCount,
+        bool isApproved
+    );
+
+    // Functions
+    function signAddAdmin(bytes32 adminHash, address newAdmin, address signer) public {
+        require(isAdmin(signer), "Only admins can sign");
+        EnumerableSet.add(addAdminSignatures[adminHash], signer);
+        uint256 adminCount = EnumerableSet.length(admins);
+        uint256 signatureCount = EnumerableSet.length(addAdminSignatures[adminHash]);
+        bool isApproved = signatureCount > (adminCount / 2);
+        emit SingAddAdmin(
+            newAdmin,
+            signer,
+            adminCount,
+            signatureCount,
+            isApproved
+        );
+        if (isApproved) {
+            delete addAdminSignatures[adminHash]; // clear the signatures
+            EnumerableSet.add(admins, newAdmin);
+        }
     }
 
-    function removeAdmin(address newAdmin) public {
-        require(msg.sender == owner, "Only owner can remove mint admins");
-        EnumerableSet.remove(admins, newAdmin);
+    function signRemoveAdmin(bytes32 adminHash, address newAdmin, address signer) public {
+        require(isAdmin(signer), "Only admins can remove");
+        require(EnumerableSet.length(admins) > 1, "Cannot remove the last admin");
+        EnumerableSet.add(removeAdminSignatures[adminHash], signer);
+        uint256 adminCount = EnumerableSet.length(admins);
+        uint256 signatureCount = EnumerableSet.length(removeAdminSignatures[adminHash]);
+        bool isApproved = signatureCount > (adminCount / 2);
+        emit SingRemoveAdmin(
+            newAdmin,
+            signer,
+            adminCount,
+            signatureCount,
+            isApproved
+        );
+        if (isApproved) {
+            delete removeAdminSignatures[adminHash]; // clear the signatures
+            EnumerableSet.remove(admins, newAdmin);
+        }
     }
 
-    function isAdmin(address user) public view returns (bool) {
-        return EnumerableSet.contains(admins, user);
+    function isAdmin(address account) public view returns (bool) {
+        return EnumerableSet.contains(admins, account);
     }
 
     function getAdmins() public view returns (address[] memory) {
         return EnumerableSet.values(admins);
     }
-
-    function getOwner() public view returns (address) {
-        return owner;
-    }
 }
 
 contract AdminMint is Admin {
+    // Variables
     mapping(bytes32 => EnumerableSet.AddressSet) internal mintSignatures;
     mapping(address => uint) public minted;
-    uint public mintMax;
+    uint public TMAX;
+    mapping(address => MintedAmount) public mintedAmounts;
 
-    constructor(address _owner, uint _mintMax) Admin(_owner) {
-        mintMax = _mintMax;
+    // Constructor
+    constructor(address firstAdmin, uint _tmax) Admin(firstAdmin) {
+        TMAX = _tmax;
     }
 
+    struct MintedAmount {
+        uint256 amount;
+        uint256 lastUpdated;
+    }
+
+    // Functions
     function isConsensus(bytes32 mintHash, address signer) public returns (bool) {
         require(isAdmin(signer), "Only mint admins can sign");
         EnumerableSet.add(mintSignatures[mintHash], signer);
@@ -60,106 +113,181 @@ contract AdminMint is Admin {
             return false;
         }
     }
+
+    function checkTMAX(uint256 mintAmount) public view returns (bool) {
+        return mintAmount <= TMAX;
+    }
+
+    function newMint(address account, uint256 amount) public {
+        MintedAmount storage data = mintedAmounts[account];
+
+        // reset the amount if a new day has started
+        if (block.timestamp / 86400 > data.lastUpdated / 86400) {
+            data.amount = 0;
+        }
+
+        // check if the transfer amount not exceeds the limit
+        require(data.amount + amount <= TMAX, "Mint amount exceeds the limit");
+
+        data.amount += amount;
+        data.lastUpdated = block.timestamp;
+    }
 }
 
 contract AdminRestriction is Admin {
+    // Variables
     uint public defaultTransferLimit;
-
-    mapping(bytes32 => TransferLimitProposal) private transferLimitProposals;
+    mapping(bytes32 => EnumerableSet.AddressSet) private transferLimitProposals;
     mapping(address => uint256) private userTransferLimits;
+    mapping(address => TransferedAmount) private transferedAmounts;
 
-    constructor(address _owner, uint256 _transferLimit) Admin(_owner) {
+    // Constructor
+    constructor(address firstAdmin, uint256 _transferLimit) Admin(firstAdmin) {
         defaultTransferLimit = _transferLimit;
-
     }
 
-    struct TransferLimitProposal {
-        EnumerableSet.AddressSet accounts;
+    // Structs
+    struct TransferedAmount {
+        uint256 amount;
         uint256 lastUpdated;
     }
 
-    function signTransferLimit(bytes32 transferHash, address account, uint256 _newLimit) public {
-        require(isAdmin(msg.sender), "Only restriction admins can sign");
-        EnumerableSet.add(transferLimitProposals[transferHash].accounts, msg.sender);
-        bool isTransferLimitApproved = (
-            EnumerableSet.length(transferLimitProposals[transferHash].accounts)
-            > (EnumerableSet.length(admins) / 2)
+    event SignTransferLimit(
+        bytes32 indexed transferHash,
+        address indexed account,
+        uint256 newLimit,
+        address indexed signer,
+        uint256 adminCount,
+        uint256 signatureCount,
+        bool isApproved
+    );
+
+    // Functions
+    function signTransferLimit(bytes32 transferHash, address account, uint256 _newLimit, address signer) public {
+        require(isAdmin(signer), "Only restriction admins can sign");
+        EnumerableSet.add(transferLimitProposals[transferHash], signer);
+        uint256 adminCount = EnumerableSet.length(admins);
+        uint256 signatureCount = EnumerableSet.length(transferLimitProposals[transferHash]);
+        bool isApproved = signatureCount > (adminCount / 2);
+        emit SignTransferLimit(
+            transferHash,
+            account,
+            _newLimit,
+            signer,
+            adminCount,
+            signatureCount,
+            isApproved
         );
-        if (isTransferLimitApproved) {
+        if (isApproved) {
             userTransferLimits[account] = _newLimit;
         }
     }
+
+    function getTransferLimit(address account) public view returns (uint256) {
+        if (userTransferLimits[account] == 0) {
+            return defaultTransferLimit;
+        } else {
+            return userTransferLimits[account];
+        }
+    }
+
+    function newTransfer(address account, uint256 amount) public {
+        TransferedAmount storage data = transferedAmounts[account];
+
+        // reset the amount if a new day has started
+        if (block.timestamp / 86400 > data.lastUpdated / 86400) {
+            data.amount = 0;
+        }
+
+        // check if the transfer amount not exceeds the limit
+        uint256 userLimit = getTransferLimit(account);
+        require(data.amount + amount <= userLimit, "Transfer amount exceeds the limit");
+
+        data.amount += amount;
+        data.lastUpdated = block.timestamp;
+    }
 }
 
-contract BDAToken is ERC20Capped, AccessControl {
+contract BDAToken is ERC20Capped {
+    // Variables
     AdminMint public adminMint;
     AdminRestriction public adminRestriction;
+    uint256 transferLimit;
 
-    bytes32 public constant MINTING_ADMIN = keccak256("MINTING_ADMIN");
-    bytes32 public constant RESTRICTION_ADMIN = keccak256("RESTRICTION_ADMIN");
-
-    modifier onlyMintAdmin {
-        require(hasRole(MINTING_ADMIN, msg.sender), "Caller is not a minting admin");
-        _;
-    }
-
-    modifier onlyRestrictionAdmin {
-        require(hasRole(RESTRICTION_ADMIN, msg.sender), "Caller is not a restriction admin");
-        _;
-    }
-
-    event Mint(address indexed to, uint256 amount);
-
-    // Modifiers with correct syntax
-    constructor(string memory name, string memory symbol, uint256 tmax, uint256 cap, uint256 _transferLimit) ERC20(name, symbol) ERC20Capped(cap) {
+    // Constructor
+    constructor(string memory name, string memory symbol, uint256 tmax, uint256 _cap, uint256 _transferLimit) ERC20(name, symbol) ERC20Capped(_cap) {
         adminMint = new AdminMint(msg.sender, tmax);
         adminRestriction = new AdminRestriction(msg.sender, _transferLimit);
     }
 
-//    function getAdminMint() public view returns (Admin) {
+    // Modifiers
+    modifier onlyMintAdmin {
+        require(adminMint.isAdmin(msg.sender), "Caller is not a mint admin");
+        _;
+    }
+
+    modifier onlyRestrictionAdmin {
+        require(adminRestriction.isAdmin(msg.sender), "Caller is not a restriction admin");
+        _;
+    }
+
+    // Events
+    event Mint(address indexed to, uint256 amount);
+    event SignAddingAdminMint(address indexed account, address indexed signer);
+    event SignRemovingAdminMint(address indexed account, address indexed signer);
+    event TransferBDAToken(address indexed from, address indexed to, uint256 amount, uint256 limit);
+
+    // Functions
     function getAdminMint() public view returns (address[] memory) {
         return adminMint.getAdmins();
     }
 
-    function getAdminRestriction() public view returns (Admin) {
-        return adminRestriction;
+    function getAdminRestriction() public view returns (address[] memory) {
+        return adminRestriction.getAdmins();
     }
 
-    function mint(address to, uint256 amount) public onlyMintAdmin {
-        require(totalSupply() + amount <= adminMint.mintMax(), "Total supply exceeds the maximum cap");
-        _mint(to, amount);
+    function getTransferLimit(address account) public view returns (uint256) {
+        return adminRestriction.getTransferLimit(account);
     }
 
     function mint(address[] memory to, uint256[] memory amount) public onlyMintAdmin {
         require(to.length == amount.length, "Array length mismatch");
+        require(adminMint.isAdmin(msg.sender), "Caller is not a mint admin");
+
+        // Check cap
         uint256 amountMint = 0;
         for (uint256 i = 0; i < to.length; i++) {
             amountMint += amount[i];
+
+            // Check TMAX
+            require(adminMint.checkTMAX(amount[i]), "Exceeds maximum mint amount");
         }
-        require(totalSupply() + amountMint <= adminMint.mintMax(), "Total supply exceeds the maximum cap");
+        require(totalSupply() + amountMint <= cap(), "Total supply exceeds the maximum cap");
+
         for (uint256 i = 0; i < to.length; i++) {
+            adminMint.newMint(to[i], amount[i]);
             _mint(to[i], amount[i]);
         }
     }
 
-    function burn(address from, uint256 amount) public onlyRestrictionAdmin {
-        _burn(from, amount);
+    function burnAccount() public {
+        uint balance = balanceOf(msg.sender);
+        if (balance == 0) {
+            return;
+        }
+        _burn(msg.sender, balance);
     }
 
-    function transfer(address from, address to, uint256 amount) public onlyRestrictionAdmin {
-        require(amount <= adminRestriction.defaultTransferLimit(), "Transfer amount exceeds the limit");
+    function transfer(address to, uint256 amount) public override returns (bool){
+        uint256 limit = adminRestriction.getTransferLimit(msg.sender);
+        emit TransferBDAToken(msg.sender, to, amount, limit);
         require(to != address(0), "ERC20: transfer to the zero address");
-        _transfer(from, to, amount);
-    }
 
-    function mintTokens(address to, uint256 amount) public onlyMintAdmin {
-        require(amount <= adminMint.mintMax(), "Exceeds maximum mint amount");
-        emit Mint(to, amount);
-    }
+        // check if the transfer amount not exceeds the limit
+        adminRestriction.newTransfer(msg.sender, amount);
 
-    function updateTransferLimit(address account, uint256 _newLimit) public onlyRestrictionAdmin {
-        bytes32 transferHash = keccak256(abi.encodePacked(account, _newLimit));
-        adminRestriction.signTransferLimit(transferHash, account, _newLimit);
+        _transfer(msg.sender, to, amount);
+        return true;
     }
 
     /**
@@ -170,12 +298,36 @@ contract BDAToken is ERC20Capped, AccessControl {
     function signMint(address[] memory accounts, uint256[] memory amounts) public onlyMintAdmin {
         bytes32 mintHash = keccak256(abi.encodePacked(accounts, amounts));
         if (adminMint.isConsensus(mintHash, msg.sender)) {
-            mint(accounts, amounts);
+            for (uint256 i = 0; i < accounts.length; i++) {
+                _mint(accounts[i], amounts[i]);
+            }
         }
     }
 
-    function signTransferLimitUpdate(address account, uint256 _newLimit) public onlyRestrictionAdmin {
+    function signAddAdminMint(address account) public onlyMintAdmin {
+        bytes32 mintHash = keccak256(abi.encodePacked(account));
+        adminMint.signAddAdmin(mintHash, account, msg.sender);
+        emit SignAddingAdminMint(account, msg.sender);
+    }
+
+    function signRemoveAdminMint(address account) public onlyMintAdmin {
+        bytes32 mintHash = keccak256(abi.encodePacked(account));
+        adminMint.signRemoveAdmin(mintHash, account, msg.sender);
+        emit SignRemovingAdminMint(account, msg.sender);
+    }
+
+    function signAddAdminRestriction(address account) public onlyRestrictionAdmin {
+        bytes32 adminHash = keccak256(abi.encodePacked(account));
+        adminRestriction.signAddAdmin(adminHash, account, msg.sender);
+    }
+
+    function signRemoveAdminRestriction(address account) public onlyRestrictionAdmin {
+        bytes32 adminHash = keccak256(abi.encodePacked(account));
+        adminRestriction.signRemoveAdmin(adminHash, account, msg.sender);
+    }
+
+    function signUpdateTransferLimit(address account, uint256 _newLimit) public onlyRestrictionAdmin {
         bytes32 transferHash = keccak256(abi.encodePacked(account, _newLimit));
-        adminRestriction.signTransferLimit(transferHash, account, _newLimit);
+        adminRestriction.signTransferLimit(transferHash, account, _newLimit, msg.sender);
     }
 }
