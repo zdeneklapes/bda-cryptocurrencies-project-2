@@ -18,6 +18,8 @@ services:
     tty: true
     ports:
       - 24012:24012
+      - 3000:3000
+      - 8000:8000
     depends_on:
       - blockchain
   blockchain:

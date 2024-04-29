@@ -59,5 +59,11 @@ EOF
 COPY package.json package-lock.json /app/
 RUN <<EOF
     set -ex
-    npm install
+    cd /app && npm install
+EOF
+
+COPY dapp/package.json dapp/package-lock.json /app/dapp/
+RUN <<EOF
+    set -ex
+    cd /app/dapp && npm install --force
 EOF
