@@ -2,7 +2,7 @@
 import React, {createContext, useState, useEffect, useContext} from 'react';
 import Web3 from 'web3';
 import BDATokenJSON from './BDAToken.json';
-import { useFormik } from 'formik';
+import {useFormik} from 'formik';
 import * as Yup from 'yup';
 import SendTokenForm from "./components/SendTokenForm";
 
@@ -133,36 +133,8 @@ export default function Home() {
             </div>
             {account ? (
                 <div>
-                <div className="info-container">
-                        <p className="info-text"><strong>Connected with:</strong> {account}</p>
-                        <p className="info-text"><strong>Balance:</strong> {balance} ETH</p>
-                        <p className="info-text"><strong>Balance:</strong> {balance} BT</p>
-                        <p className="info-text"><strong>Minted Today:</strong> {mintedToday} tokens</p>
-                        <p className="info-text"><strong>Mint Limit / Day:</strong> {mintLimit} tokens</p>
-                        {/*<p className="info-text"><strong>Available to Mint:</strong> {mintLimit - mintedToday} tokens</p>*/}
-                        <p className="info-text"><strong>Transfer Limit / Day:</strong> {transferLimit} tokens</p>
-                        {/*<p className="info-text"><strong>Available to Transfer:</strong> {transferLimit} tokens</p>*/}
-                        <p className="info-text"><strong>Roles:</strong> {userRoles.length > 0 ? userRoles.join(', ') : 'No roles found'}</p>
-                    </div>
-                    <SendTokenForm />
-                    {/*<div>*/}
-                    {/*    <h2>Send Tokens</h2>*/}
-                    {/*    <input*/}
-                    {/*        type="text"*/}
-                    {/*        value={receiverAddress}*/}
-                    {/*        onChange={e => setReceiverAddress(e.target.value)}*/}
-                    {/*        style={{color: 'black'}}*/}
-                    {/*        placeholder="Receiver address e.g. 0xE9F9..."*/}
-                    {/*    />*/}
-                    {/*    <input*/}
-                    {/*        type="text"*/}
-                    {/*        value={amount}*/}
-                    {/*        onChange={e => setAmount(e.target.value)}*/}
-                    {/*        style={{color: 'black'}}*/}
-                    {/*        placeholder="Amount e.g. 10"*/}
-                    {/*    />*/}
-                    {/*    <button onClick={sendTokens}>Send</button>*/}
-                    {/*</div>*/}
+                    <UserInfo account={account} balance={balance} mintedToday={mintedToday} mintLimit={mintLimit} transferLimit={transferLimit} userRoles={userRoles}/>
+                    <SendTokenForm/>
                 </div>
             ) : (
                 <button onClick={connectWallet} className="mt-5 rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-700">
@@ -172,3 +144,19 @@ export default function Home() {
         </main>
     );
 }
+
+function UserInfo({ account, balance, mintedToday, mintLimit, transferLimit, userRoles }) {
+    return (
+        <div className="info-container">
+            <p className="info-text"><strong>Connected with:</strong> {account}</p>
+            <p className="info-text"><strong>Balance:</strong> {balance} ETH</p>
+            <p className="info-text"><strong>Balance:</strong> {balance} BT</p>
+            <p className="info-text"><strong>Minted Today:</strong> {mintedToday} tokens</p>
+            <p className="info-text"><strong>Mint Limit / Day:</strong> {mintLimit} tokens</p>
+            <p className="info-text"><strong>Transfer Limit / Day:</strong> {transferLimit} tokens</p>
+            <p className="info-text"><strong>Roles:</strong> {userRoles.length > 0 ? userRoles.join(', ') : 'No roles found'}</p>
+        </div>
+    );
+}
+
+export default UserInfo;
