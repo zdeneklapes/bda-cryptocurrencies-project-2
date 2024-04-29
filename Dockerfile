@@ -55,13 +55,14 @@ EOF
 #EOF
 #WORKDIR /app
 
-# Install npm project packages
+# Install npm project packages for the Solidity project
 COPY package.json package-lock.json /app/
 RUN <<EOF
     set -ex
     cd /app && npm install
 EOF
 
+# Install npm project packages for the DAPP project
 COPY dapp/package.json dapp/package-lock.json /app/dapp/
 RUN <<EOF
     set -ex

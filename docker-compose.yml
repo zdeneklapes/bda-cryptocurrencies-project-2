@@ -25,6 +25,6 @@ services:
   blockchain:
     container_name: ${COMPOSE_PROJECT_NAME}-blockchain
     image: trufflesuite/ganache
-    entrypoint: ["node", "/app/dist/node/cli.js", "--server.host=0.0.0.0"]
+    entrypoint: ["node", "/app/dist/node/cli.js", "--gasLimit=12500000", "--server.host=0.0.0.0", "--accounts=10", "--mnemonic='candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'"]
     ports:
       - 8545:8545

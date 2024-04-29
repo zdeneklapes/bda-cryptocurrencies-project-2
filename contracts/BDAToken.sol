@@ -330,4 +330,9 @@ contract BDAToken is ERC20Capped {
         bytes32 transferHash = keccak256(abi.encodePacked(account, _newLimit));
         adminRestriction.signTransferLimit(transferHash, account, _newLimit, msg.sender);
     }
+
+    function getUserRoles() public view returns (bool isAdminMint, bool isAdminRestriction) {
+        address account = msg.sender;
+        return (adminMint.isAdmin(account), adminRestriction.isAdmin(account));
+    }
 }

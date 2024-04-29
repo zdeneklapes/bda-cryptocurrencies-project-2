@@ -71,6 +71,13 @@ contract('TEST SUITE [ Solidity ]', function (accounts) {
         const isRemoved = !admins1.includes(accounts[1]);
         assert(isRemoved, "AdminMint not removed");
     });
+
+    it.only("Get user roles", async () => {
+        const result = await token.getUserRoles({from: accounts[0]});
+        assert(result.isAdminMint === true, "isAdminMint not false");
+        assert(result.isAdminRestriction === true, "isAdminRestriction not false");
+    });
+
 });
 
 contract('TEST SUITE [ Mint ]', function (accounts) {
@@ -192,3 +199,5 @@ contract('TEST SUITE [ Transfer ]', function (accounts) {
         assert(balance3.toNumber() === 200, "Tokens not transferred to account[1]");
     });
 });
+
+
