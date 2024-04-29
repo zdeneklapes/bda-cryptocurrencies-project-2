@@ -3,6 +3,7 @@
 others/
 tmp/
 build/
+node_modules/
 
 .DS_Store
 tags

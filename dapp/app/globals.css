@@ -3,31 +3,87 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+    :root {
+        --foreground-rgb: 255, 255, 255;
+        --background-start-rgb: 0, 0, 0;
+        --background-end-rgb: 0, 0, 0;
+    }
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(
+            to bottom,
+            transparent,
+            rgb(var(--background-end-rgb))
+    ) rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+    .text-balance {
+        text-wrap: balance;
+    }
+}
+
+
+/* Header */
+.header-container {
+    background-color: #f0f4f8; /* Light gray background for the entire container */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.12); /* Subtle shadow for depth */
+    text-align: center; /* Center-align the text for better aesthetics */
+    max-width: 600px;
+    margin: 20px auto; /* Center the div in the middle of the page */
+}
+
+.header, .sub-header {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2A2F33; /* Consistent text color for header and sub-header */
+}
+
+.header {
+    font-size: 24px; /* Larger font for main header */
+    margin-bottom: 10px; /* Space between the header and sub-header */
+}
+
+.sub-header {
+    font-size: 18px; /* Smaller font for sub-header */
+}
+
+.sub-header a {
+    color: #3182CE; /* Blue for links */
+    text-decoration: none; /* No underline by default */
+}
+
+.sub-header a:hover, .sub-header a:focus {
+    text-decoration: underline; /* Underline on hover/focus */
+    color: #2B6CB0; /* Darker blue for hover/focus */
+}
+
+/* Account Info */
+.info-container {
+    background-color: #f4f4f8;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.info-text {
+    color: #555;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.info-text strong {
+    color: #333;
 }
