@@ -47,6 +47,18 @@ function deploy () {
     eval "$CMD"
 }
 
+function abi() {
+    CMD1="cd /app"
+    CMD2="npx truffle deploy --network development --reset"
+    CMD3="cd /app/dapp"
+    CMD4="rm app/BDAToken.json"
+    CMD5="cp ../build/contracts/BDAToken.json app/"
+    for cmd in "$CMD1" "$CMD2" "$CMD3" "$CMD4" "$CMD5"; do
+        echo "$cmd"
+        eval "$cmd"
+    done
+}
+
 function help() {
     # Print usage on stdout
     echo "Available functions:"

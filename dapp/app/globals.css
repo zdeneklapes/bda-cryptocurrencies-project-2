@@ -87,3 +87,31 @@ body {
 .info-text strong {
     color: #333;
 }
+
+/* Button Base Style */
+.button {
+    padding: 10px 20px;
+    background-image: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.button:focus {
+    box-shadow: 0 0 0 3px rgba(50, 50, 250, 0.5);
+}

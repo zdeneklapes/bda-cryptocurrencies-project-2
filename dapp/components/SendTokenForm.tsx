@@ -1,8 +1,11 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import HomeContext, {IState, HomeContextType} from '@/components/HomeContext';
 
 const SendTokensForm = () => {
+    const {state, dispatch}: HomeContextType = useContext(HomeContext);
+
     const formik = useFormik({
         initialValues: {
             receiverAddress: '',
@@ -17,14 +20,24 @@ const SendTokensForm = () => {
                 .required('Amount is required'),
         }),
         onSubmit: values => {
-            // Handle submission, e.g., send tokens
             console.log('Form values', values);
+            sendTokens(values.receiverAddress, values.amount);
         },
     });
 
+    async function sendTokens(receiverAddress, amount) {
+        const amountInWei = state.web3.utils.toWei(amount, 'ether');
+        try {
+            await state.contract.methods.transfer(receiverAddress, amountInWei).send({from: state.account});
+        } catch (error) {
+            console.error('Error sending tokens', error);
+        }
+    }
+
+
     return (
         <form onSubmit={formik.handleSubmit} style={formStyle}>
-            <h2 style={{ textAlign: 'center' }}>Send Tokens</h2>
+            <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '20px', fontSize: '20px' }}>Send Tokens</h2>
             <input
                 type="text"
                 name="receiverAddress"
@@ -69,6 +82,7 @@ const inputStyle = {
     marginBottom: '10px',
     borderRadius: '4px',
     border: '1px solid #ccc',
+    color: '#333',
 };
 
 const buttonStyle = {

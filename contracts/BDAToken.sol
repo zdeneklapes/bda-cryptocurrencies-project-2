@@ -101,6 +101,14 @@ contract AdminMint is Admin {
         uint256 lastUpdated;
     }
 
+    function getMintLimit() public view returns (uint256) {
+        return TMAX;
+    }
+
+    function getMintedAmount(address account) public view returns (uint256) {
+        return mintedAmounts[account].amount;
+    }
+
     // Functions
     function isConsensus(bytes32 mintHash, address signer) public returns (bool) {
         require(isAdmin(signer), "Only mint admins can sign");
@@ -163,6 +171,19 @@ contract AdminRestriction is Admin {
     );
 
     // Functions
+    function getTransferAmounts(address account) public view returns (uint256) {
+        return transferedAmounts[account].amount;
+    }
+
+    function getTransferLimit(address account) public view returns (uint256) {
+        if (userTransferLimits[account] == 0) {
+            return defaultTransferLimit;
+        } else {
+            return userTransferLimits[account];
+        }
+    }
+
+
     function signTransferLimit(bytes32 transferHash, address account, uint256 _newLimit, address signer) public {
         require(isAdmin(signer), "Only restriction admins can sign");
         EnumerableSet.add(transferLimitProposals[transferHash], signer);
@@ -180,14 +201,6 @@ contract AdminRestriction is Admin {
         );
         if (isApproved) {
             userTransferLimits[account] = _newLimit;
-        }
-    }
-
-    function getTransferLimit(address account) public view returns (uint256) {
-        if (userTransferLimits[account] == 0) {
-            return defaultTransferLimit;
-        } else {
-            return userTransferLimits[account];
         }
     }
 
@@ -334,5 +347,24 @@ contract BDAToken is ERC20Capped {
     function getUserRoles() public view returns (bool isAdminMint, bool isAdminRestriction) {
         address account = msg.sender;
         return (adminMint.isAdmin(account), adminRestriction.isAdmin(account));
+    }
+
+    function getMintedToday() public view returns (uint256) {
+        address account = msg.sender;
+        return adminMint.getMintedAmount(account);
+    }
+
+    function getMintLimit() public view returns (uint256) {
+        return adminMint.getMintLimit();
+    }
+
+    function getTransferedToday() public view returns (uint256) {
+        address account = msg.sender;
+        return adminRestriction.getTransferAmounts(account);
+    }
+
+    function getTransferLimit() public view returns (uint256) {
+        address account = msg.sender;
+        return adminRestriction.getTransferLimit(account);
     }
 }

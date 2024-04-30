@@ -1,48 +1,67 @@
 'use client';
-import React, {createContext, useState, useEffect, useContext} from 'react';
+import React, {createContext, useState, useEffect, useContext, useReducer} from 'react';
 import Web3 from 'web3';
-import BDATokenJSON from './BDAToken.json';
-import {useFormik} from 'formik';
-import * as Yup from 'yup';
-import SendTokenForm from "./components/SendTokenForm";
+import BDATokenJSON from '@/lib/BDAToken.json';
+
+import SendTokenForm from "@/components/SendTokenForm";
+import UserInfo from "@/components/UserInfo";
+import HomeContext from "@/components/HomeContext";
+
+const contractABI = BDATokenJSON.abi;
+const contractAddress = '0xcfeD223fAb2A41b5a5a5F9AaAe2D1e882cb6Fe2D';
+
+const initialState = {
+    web3: null,
+    balanceETH: '0',
+    balanceBT: '0',
+    account: null,
+    receiverAddress: '',
+    amount: '',
+    delegateAddress: '',
+    delegationAmount: '',
+    userRoles: [],
+    mintedToday: 0,
+    mintLimit: 0,
+    transferLimit: 0,
+    contract: null
+};
+
+function reducer(state, action) {
+    switch (action.type) {
+        case 'SET_WEB3':
+            return {...state, web3: action.payload};
+        case 'SET_BALANCE_ETH':
+            return {...state, balanceETH: action.payload};
+        case 'SET_BALANCE_BT':
+            return {...state, balanceBT: action.payload};
+        case 'SET_ACCOUNT':
+            return {...state, account: action.payload};
+        case 'SET_RECEIVER_ADDRESS':
+            return {...state, receiverAddress: action.payload};
+        case 'SET_AMOUNT':
+            return {...state, amount: action.payload};
+        case 'SET_DELEGATE_ADDRESS':
+            return {...state, delegateAddress: action.payload};
+        case 'SET_DELEGATION_AMOUNT':
+            return {...state, delegationAmount: action.payload};
+        case 'SET_USER_ROLES':
+            return {...state, userRoles: action.payload};
+        case 'SET_MINTED_TODAY':
+            return {...state, mintedToday: action.payload};
+        case 'SET_MINT_LIMIT':
+            return {...state, mintLimit: action.payload};
+        case 'SET_TRANSFER_LIMIT':
+            return {...state, transferLimit: action.payload};
+        case 'SET_CONTRACT':
+            return {...state, contract: action.payload};
+        default:
+            throw new Error(`Unhandled action type: ${action.type}`);
+    }
+}
 
 
 export default function Home() {
-    const [web3, setWeb3] = useState(null);
-    const [balance, setBalance] = useState('0');
-    const [account, setAccount] = useState(null);
-    const [receiverAddress, setReceiverAddress] = useState('');
-    const [amount, setAmount] = useState('');
-    const [delegateAddress, setDelegateAddress] = useState('');
-    const [delegationAmount, setDelegationAmount] = useState('');
-    const [userRoles, setUserRoles] = useState([]);
-    const [mintedToday, setMintedToday] = useState(0);
-    const [mintLimit, setMintLimit] = useState(0);
-    const [transferLimit, setTransferLimit] = useState(0);
-    const [contract, setContract] = useState(null);
-
-    useEffect(() => {
-        if (typeof window.ethereum !== 'undefined') {
-            console.error("MetaMask is not installed!");
-        }
-        const web3Instance = new Web3(window.ethereum);
-        web3Instance.eth.net.getId().then(console.log);
-        console.log("web3Instance", web3Instance);
-        console.log(web3Instance.currentProvider);
-        setWeb3(web3Instance);
-    }, [account]);
-
-    useEffect(() => {
-        if (!web3) {
-            console.error("Web3 is not initialized");
-            return;
-        }
-        const contractABI = BDATokenJSON.abi;
-        const contractAddress = '0x345cA3e014Aaf5dcA488057592ee47305D9B3e10';
-        const contractInstance = new web3.eth.Contract(contractABI, contractAddress);
-        setupEventListeners(contractInstance);
-        setContract(contractInstance);
-    }, [web3]);
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     function setupEventListeners(contractInstance) {
         contractInstance.events.TransferBDAToken({}, (error, event) => {
@@ -51,112 +70,143 @@ export default function Home() {
                 return;
             }
             console.log('Transfer event:', event);
-            updateBalance();
+            // updateBalance();
         });
     }
 
-    async function connectWallet() {
+    async function initUserWallet() {
+        // Web3
+        let web3Instance;
         try {
-            if (!window.ethereum) {
-                throw new Error("Ethereum wallet is not installed. Please install MetaMask or another wallet provider.");
-            }
-            const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
-            setAccount(accounts[0]);
-            // const web3Instance = new window.Web3(window.ethereum);
-            // setWeb3(web3Instance);
+            web3Instance = new Web3(window.ethereum);
+            const id = await web3Instance.eth.net.getId()
+            console.log("web3Instance", web3Instance);
+            console.log("id", id);
+            dispatch({type: 'SET_WEB3', payload: web3Instance});
         } catch (error) {
             console.error("Failed to connect wallet", error);
         }
-    }
 
-    async function updateBalance() {
-        const balanceWei = await web3.eth.getBalance(account);
-        const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
-        setBalance(balanceEth);
-    }
-
-    async function sendTokens() {
-        if (!receiverAddress || !amount) return;
-        const amountInWei = web3.utils.toWei(amount, 'ether');
-        await contract.methods.transfer(receiverAddress, amountInWei).send({from: account});
-    }
-
-    async function mintTokens() {
-        await contract.methods.mint([], []).send({from: account});
-    }
-
-    useEffect(() => {
-        const fetchRoles = async () => {
-            const accounts = await web3.eth.getAccounts();
-            console.log('Accounts:', accounts);
-            const roles = await contract.methods.getUserRoles().call({from: accounts[0]});
-            console.log('Roles:', roles);
-            setUserRoles(roles); // Assuming setUserRoles updates the state with fetched roles
-        };
-
-        if (account) {
-            fetchRoles();
-        }
-    }, [contract, account]);
-
-    const handleDelegation = async () => {
-        if (!delegateAddress || !delegationAmount) {
-            alert("Please fill in all fields.");
-            return;
-        }
-
+        // Contract
+        let contract;
         try {
-            const accounts = await web3.eth.getAccounts();
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. Make sure Ethereum client is connected.");
-            }
-            if (!account) setAccount(accounts[0]);
-
-            // Calling the approve function on the smart contract
-            const response = await contract.methods.approve(delegateAddress, web3.utils.toWei(delegationAmount, 'ether')).send({from: accounts[0]});
-            console.log('Transaction response:', response);
-            alert("Delegation approved successfully!");
+            contract = new web3Instance.eth.Contract(contractABI, contractAddress);
+            dispatch({type: 'SET_CONTRACT', payload: contract});
         } catch (error) {
-            console.error("Error during token delegation:", error);
-            alert("Failed to delegate tokens. See the console for more details.");
+            console.error("Failed to connect contract", error);
         }
-    };
 
+        // Accounts
+        let account;
+        try {
+            const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
+            account = accounts[0];
+            dispatch({type: 'SET_ACCOUNT', payload: account});
+        } catch (error) {
+            console.error("Failed to connect account", error);
+        }
+
+        // Balance ETH
+        try {
+            const balanceWei = await web3Instance.eth.getBalance(account);
+            const balance = web3Instance.utils.fromWei(balanceWei, 'ether');
+            console.log('Balance ETH:', balance);
+            dispatch({type: 'SET_BALANCE_ETH', payload: balance});
+        } catch (error) {
+            console.error("Failed to connect balance", error);
+        }
+
+        // Balance BT
+        try {
+            const balance = await contract.methods.balanceOf(account).call({from: account});
+            const balanceNumber = Number(balance);
+            console.log('Balance BT:', balanceNumber);
+            dispatch({type: 'SET_BALANCE_BT', payload: balanceNumber});
+        } catch (error) {
+            console.error("Failed to connect balance", error);
+        }
+
+        // Roles
+        try {
+            const fetchedRoles = await contract.methods.getUserRoles().call({from: account});
+            const userRoles = [];
+
+            // Check for specific roles and add to the roles array
+            if (fetchedRoles.isAdminMint) {
+                userRoles.push('Admin Mint');
+            }
+            if (fetchedRoles.isAdminTransfer) {
+                userRoles.push('Admin Transfer');
+            }
+
+            // Dispatch the updated roles to your application's state
+            console.log('User roles:', userRoles);
+            dispatch({type: 'SET_USER_ROLES', payload: userRoles});
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+        }
+
+        // Minted today
+        try {
+            const mintedToday = await contract.methods.getMintedToday().call({from: account});
+            const mintedTodayNumber = Number(mintedToday);
+            console.log('Minted today:', mintedTodayNumber);
+            dispatch({type: 'SET_MINTED_TODAY', payload: mintedTodayNumber});
+        } catch (error) {
+            console.error('Error fetching minted today:', error);
+        }
+
+        // Mint limit per day
+        try {
+            const mintLimit = await contract.methods.getMintLimit().call({from: account});
+            const mintLimitNumber = Number(mintLimit);
+            console.log('Mint limit:', mintLimitNumber);
+            dispatch({type: 'SET_MINT_LIMIT', payload: mintLimitNumber});
+        } catch (error) {
+            console.error('Error fetching mint limit:', error);
+        }
+
+        // Transfered Amount
+        try {
+            const transferAmount = await contract.methods.getTransferedToday().call({from: account});
+            const transferAmountNumber = Number(transferAmount);
+            console.log('Transfer limit:', transferAmountNumber);
+            dispatch({type: 'SET_TRANSFER_LIMIT', payload: transferAmountNumber});
+        } catch (error) {
+            console.error('Error fetching transfer limit:', error);
+        }
+
+        // Transfer limit
+        try {
+            const transferLimit = await contract.methods.getTransferLimit().call({from: account});
+            const transferLimitNumber = Number(transferLimit);
+            console.log('Transfer limit:', transferLimitNumber);
+            dispatch({type: 'SET_TRANSFER_LIMIT', payload: transferLimitNumber});
+        } catch (error) {
+            console.error('Error fetching transfer limit:', error);
+        }
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4">
-            <div class="header-container">
-                <h1 class="header">Welcome to Ethereum Wallet Connection Example</h1>
-                <h2 class="sub-header">
+            <div className="header-container">
+                <h1 className="header">Welcome to Ethereum Wallet Connection Example</h1>
+                <h2 className="sub-header">
                     Created by <a href="https://github.com/zdeneklapes" target="_blank">Zdenek Lapes on GitHub</a> | <a href="https://twitter.com/zdeneklapes" target="_blank">Twitter</a>
                 </h2>
             </div>
-            {account ? (
+            {state.account ? (
                 <div>
-                    <UserInfo account={account} balance={balance} mintedToday={mintedToday} mintLimit={mintLimit} transferLimit={transferLimit} userRoles={userRoles}/>
-                    <SendTokenForm/>
+                    <HomeContext.Provider value={{state, dispatch}}>
+                        <UserInfo account={state.account} balanceETH={state.balanceETH} balanceBT={state.balanceBT} mintedToday={state.mintedToday} mintLimit={state.mintLimit} transferLimit={state.transferLimit} userRoles={state.userRoles}/>
+                        <SendTokenForm/>
+                    </HomeContext.Provider>
                 </div>
             ) : (
-                <button onClick={connectWallet} className="mt-5 rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-700">
+                <button onClick={initUserWallet} className="mt-5 rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-700">
                     Connect to Ethereum Wallet
                 </button>
             )}
         </main>
     );
 }
-
-function UserInfo({ account, balance, mintedToday, mintLimit, transferLimit, userRoles }) {
-    return (
-        <div className="info-container">
-            <p className="info-text"><strong>Connected with:</strong> {account}</p>
-            <p className="info-text"><strong>Balance:</strong> {balance} ETH</p>
-            <p className="info-text"><strong>Balance:</strong> {balance} BT</p>
-            <p className="info-text"><strong>Minted Today:</strong> {mintedToday} tokens</p>
-            <p className="info-text"><strong>Mint Limit / Day:</strong> {mintLimit} tokens</p>
-            <p className="info-text"><strong>Transfer Limit / Day:</strong> {transferLimit} tokens</p>
-            <p className="info-text"><strong>Roles:</strong> {userRoles.length > 0 ? userRoles.join(', ') : 'No roles found'}</p>
-        </div>
-    );
-}
-
-export default UserInfo;

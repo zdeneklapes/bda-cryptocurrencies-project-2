@@ -5,7 +5,7 @@ MAX_NUMBER_OF_OWNERS = 10
 var conf = require("../config/bda_token_config.js");
 
 module.exports = function (deployer, network, accounts) {
-
+    const contractAddress = ""
     result = deployer.deploy(
         BDAToken,
         conf.NAME,
@@ -13,6 +13,7 @@ module.exports = function (deployer, network, accounts) {
         conf.TMAX,
         conf.CAP,
         conf.TRANSFER_LIMIT,
+        {from: accounts[0]}
     ).then(() => {
         console.log(`==> Deployed BDAToken to ${network} network with configuration:`, conf);
         console.log("==> Available accounts: ", accounts);
