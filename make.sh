@@ -11,26 +11,39 @@ GREEN='\033[0;32m'
 ###########################################################
 function pack() {
     # Clean and Zip project
-    if [ "$ZIP_NAME" == "" ]; then die "ZIP_NAME is not set, please set it as: \`ZIP_NAME=project_name.zip ./make.sh pack\`"; fi
+    pwd_name=$(basename `pwd`)
+    if [ "$ZIP_NAME" == "" ]; then ZIP_NAME="${pwd_name}.zip"; fi
+    if [ "$DEBUG" == "" ]; then DEBUG=0; fi
 
     CMD="zip -r '$ZIP_NAME' \
-        .dockerignore \
-        .editorconfig \
-        .env.dev \
-        Dockerfile.db \
-        Dockerfile.development \
-        Dockerfile.production \
-        docker-compose.dev.yml \
-        docker-compose.prod.yml \
-        requirements.txt \
-        .gitignore \
+        config \
+        contracts \
+        migrations \
+        dapp/app \
+        dapp/components \
+        dapp/lib \
+        dapp/public \
+        dapp/.env.development \
+        dapp/.eslintrc.json \
+        dapp/next.config.mjs \
+        dapp/package.json \
+        dapp/package-lock.json \
+        dapp/postcss.config.mjs \
+        dapp/tailwind.config.ts \
+        dapp/tsconfig.json \
+        test \
+        docker-compose.yml \
+        .secret \
+        Dockerfile \
+        DOCUMENTATION.pdf \
+        make.sh \
+        package.json \
+        package-lock.json \
         README.md \
-        pyproject.toml \
-        src \
-        .env \
-        scripts \
-        make.sh"
+        truffle-config.js \
+        "
     if [ $DEBUG -eq 1 ]; then echo "$CMD"; else eval "$CMD"; fi
+    echo -e "${GREEN}Project packed into $ZIP_NAME${NC}"
 }
 
 function ganache() {

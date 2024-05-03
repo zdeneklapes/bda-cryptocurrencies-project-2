@@ -251,18 +251,6 @@ contract BDAToken is ERC20Capped {
     event TransferBDAToken(address indexed from, address indexed to, uint256 amount, uint256 limit);
 
     // Functions
-    function getAdminMint() public view returns (address[] memory) {
-        return adminMint.getAdmins();
-    }
-
-    function getAdminRestriction() public view returns (address[] memory) {
-        return adminRestriction.getAdmins();
-    }
-
-    function getTransferLimit(address account) public view returns (uint256) {
-        return adminRestriction.getTransferLimit(account);
-    }
-
     function mint(address[] memory to, uint256[] memory amount) public onlyMintAdmin {
         require(to.length == amount.length, "Array length mismatch");
         require(adminMint.isAdmin(msg.sender), "Caller is not a mint admin");
@@ -344,6 +332,19 @@ contract BDAToken is ERC20Capped {
         adminRestriction.signTransferLimit(transferHash, account, _newLimit, msg.sender);
     }
 
+    function getAdminMint() public view returns (address[] memory) {
+        return adminMint.getAdmins();
+    }
+
+    function getAdminRestriction() public view returns (address[] memory) {
+        return adminRestriction.getAdmins();
+    }
+
+    function getTransferLimit(address account) public view returns (uint256) {
+        return adminRestriction.getTransferLimit(account);
+    }
+
+
     function getUserRoles() public view returns (bool isAdminMint, bool isAdminRestriction) {
         address account = msg.sender;
         return (adminMint.isAdmin(account), adminRestriction.isAdmin(account));
@@ -367,4 +368,5 @@ contract BDAToken is ERC20Capped {
         address account = msg.sender;
         return adminRestriction.getTransferLimit(account);
     }
+
 }

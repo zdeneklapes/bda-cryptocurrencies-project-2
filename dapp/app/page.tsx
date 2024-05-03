@@ -1,5 +1,5 @@
 'use client';
-import React, {createContext, useState, useEffect, useContext, useReducer} from 'react';
+import React, {useReducer} from 'react';
 import Web3 from 'web3';
 import BDATokenJSON from '@/lib/BDAToken.json';
 
@@ -8,7 +8,11 @@ import UserInfo from "@/components/UserInfo";
 import HomeContext from "@/components/HomeContext";
 
 const contractABI = BDATokenJSON.abi;
-const contractAddress = '0xcfeD223fAb2A41b5a5a5F9AaAe2D1e882cb6Fe2D';
+const contractAddress = '0x345cA3e014Aaf5dcA488057592ee47305D9B3e10';
+
+if (process.env.DEBUG) console.log("process.env =", process.env);
+if (process.env.DEBUG) console.log("process.env.NEXT_PUBLIC_CONTRACT_ADDRESS =", process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
+if (process.env.DEBUG) console.log("NEXT_PUBLIC_CONTRACT_ADDRESS =", NEXT_PUBLIC_CONTRACT_ADDRESS)
 
 const initialState = {
     web3: null,
@@ -69,8 +73,7 @@ export default function Home() {
                 console.error('Error on event', error);
                 return;
             }
-            console.log('Transfer event:', event);
-            // updateBalance();
+            if (process.env.VERBOSE) console.log('Transfer event:', event);
         });
     }
 
@@ -80,8 +83,8 @@ export default function Home() {
         try {
             web3Instance = new Web3(window.ethereum);
             const id = await web3Instance.eth.net.getId()
-            console.log("web3Instance", web3Instance);
-            console.log("id", id);
+            if (process.env.VERBOSE) console.log("web3Instance", web3Instance);
+            if (process.env.VERBOSE) console.log("id", id);
             dispatch({type: 'SET_WEB3', payload: web3Instance});
         } catch (error) {
             console.error("Failed to connect wallet", error);
@@ -110,7 +113,7 @@ export default function Home() {
         try {
             const balanceWei = await web3Instance.eth.getBalance(account);
             const balance = web3Instance.utils.fromWei(balanceWei, 'ether');
-            console.log('Balance ETH:', balance);
+            if (process.env.VERBOSE) console.log('Balance ETH:', balance);
             dispatch({type: 'SET_BALANCE_ETH', payload: balance});
         } catch (error) {
             console.error("Failed to connect balance", error);
@@ -120,7 +123,7 @@ export default function Home() {
         try {
             const balance = await contract.methods.balanceOf(account).call({from: account});
             const balanceNumber = Number(balance);
-            console.log('Balance BT:', balanceNumber);
+            if (process.env.VERBOSE) console.log('Balance BT:', balanceNumber);
             dispatch({type: 'SET_BALANCE_BT', payload: balanceNumber});
         } catch (error) {
             console.error("Failed to connect balance", error);
@@ -140,7 +143,7 @@ export default function Home() {
             }
 
             // Dispatch the updated roles to your application's state
-            console.log('User roles:', userRoles);
+            if (process.env.VERBOSE) console.log('User roles:', userRoles);
             dispatch({type: 'SET_USER_ROLES', payload: userRoles});
         } catch (error) {
             console.error('Error fetching roles:', error);
@@ -150,7 +153,7 @@ export default function Home() {
         try {
             const mintedToday = await contract.methods.getMintedToday().call({from: account});
             const mintedTodayNumber = Number(mintedToday);
-            console.log('Minted today:', mintedTodayNumber);
+            if (process.env.VERBOSE) console.log('Minted today:', mintedTodayNumber);
             dispatch({type: 'SET_MINTED_TODAY', payload: mintedTodayNumber});
         } catch (error) {
             console.error('Error fetching minted today:', error);
@@ -160,7 +163,7 @@ export default function Home() {
         try {
             const mintLimit = await contract.methods.getMintLimit().call({from: account});
             const mintLimitNumber = Number(mintLimit);
-            console.log('Mint limit:', mintLimitNumber);
+            if (process.env.VERBOSE) console.log('Mint limit:', mintLimitNumber);
             dispatch({type: 'SET_MINT_LIMIT', payload: mintLimitNumber});
         } catch (error) {
             console.error('Error fetching mint limit:', error);
@@ -170,7 +173,7 @@ export default function Home() {
         try {
             const transferAmount = await contract.methods.getTransferedToday().call({from: account});
             const transferAmountNumber = Number(transferAmount);
-            console.log('Transfer limit:', transferAmountNumber);
+            if (process.env.VERBOSE) console.log('Transfer limit:', transferAmountNumber);
             dispatch({type: 'SET_TRANSFER_LIMIT', payload: transferAmountNumber});
         } catch (error) {
             console.error('Error fetching transfer limit:', error);
@@ -180,7 +183,8 @@ export default function Home() {
         try {
             const transferLimit = await contract.methods.getTransferLimit().call({from: account});
             const transferLimitNumber = Number(transferLimit);
-            console.log('Transfer limit:', transferLimitNumber);
+
+            if (process.env.VERBOSE) console.log('Transfer limit:', transferLimitNumber);
             dispatch({type: 'SET_TRANSFER_LIMIT', payload: transferLimitNumber});
         } catch (error) {
             console.error('Error fetching transfer limit:', error);

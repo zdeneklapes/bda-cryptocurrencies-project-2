@@ -72,7 +72,7 @@ contract('TEST SUITE [ Solidity ]', function (accounts) {
         assert(isRemoved, "AdminMint not removed");
     });
 
-    it.only("Get user roles", async () => {
+    it("Get user roles", async () => {
         const result = await token.getUserRoles({from: accounts[0]});
         assert(result.isAdminMint === true, "isAdminMint not false");
         assert(result.isAdminRestriction === true, "isAdminRestriction not false");
