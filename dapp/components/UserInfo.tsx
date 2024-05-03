@@ -31,11 +31,11 @@ export default function UserInfo(): JSX.Element {
             <p className="info-text"><strong>Mint Limit / Day:</strong> {state.mintLimit} tokens</p>
             <p className="info-text"><strong>Transfer Limit / Day:</strong> {state.transferLimit} tokens</p>
             <p className="info-text"><strong>Roles:</strong> {state.userRoles.length > 0 ? state.userRoles.join(', ') : 'No roles found'}</p>
-            {state.mintedToday < state.mintLimit && (
-                <button onClick={handleMintRemainingTokens} className="button">
-                    Mint Remaining Tokens
-                </button>
-            )}
+            {/*{state.mintedToday < state.mintLimit && (*/}
+            {/*    <button onClick={handleMintRemainingTokens} className="button">*/}
+            {/*        Mint Remaining Tokens*/}
+            {/*    </button>*/}
+            {/*)}*/}
         </div>
     );
 }

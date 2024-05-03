@@ -271,14 +271,6 @@ contract BDAToken is ERC20Capped {
         }
     }
 
-    function burnAccount() public {
-        uint balance = balanceOf(msg.sender);
-        if (balance == 0) {
-            return;
-        }
-        _burn(msg.sender, balance);
-    }
-
     function transfer(address to, uint256 amount) public override returns (bool){
         uint256 limit = adminRestriction.getTransferLimit(msg.sender);
         emit TransferBDAToken(msg.sender, to, amount, limit);

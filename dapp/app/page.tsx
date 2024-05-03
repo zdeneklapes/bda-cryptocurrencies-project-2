@@ -203,7 +203,7 @@ export default function Home() {
                 <div>
                     <HomeContext.Provider value={{state, dispatch}}>
                         <UserInfo account={state.account} balanceETH={state.balanceETH} balanceBT={state.balanceBT} mintedToday={state.mintedToday} mintLimit={state.mintLimit} transferLimit={state.transferLimit} userRoles={state.userRoles}/>
-                        <SendTokenForm/>
+                        {/*<SendTokenForm/>*/}
                     </HomeContext.Provider>
                 </div>
             ) : (

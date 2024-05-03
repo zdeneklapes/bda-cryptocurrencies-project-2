@@ -18,13 +18,12 @@
 5. **[COMPLETED]** Implementing transfer restrictions on users. We will impose certain transfer restrictions on users (i.e., token holders) that will allow them to transfer only a limited amount of tokens per day (this is just an example; in practice, there might be different use cases). For this purpose, a transfer restriction pattern should be used. The maximum amount for transfers should be set to the default guaranteed value TRANSFERLIMIT (i.e., constant) during the deployment of contracts for all users, while specific users might have exceptions (i.e., above TRANSFERLIMIT) that are managed by the majority consensus of the restrAdmin role.
 
 ## 2nd Part: Frontend App
-1. **[COMPLETED]** Displaying the balance of the user and showing forms for transferring the tokens directly or through delegation (refer to the default functionality of ERC20).
+1. **[COMPLETED PARTIALLY]** Displaying the balance of the user and showing forms for transferring the tokens directly or through delegation (refer to the default functionality of ERC20).
+    - The balance of the user is displayed.
 2. **[COMPLETED]** Displaying the addresses associated with particular roles.
 3. **[COMPLETED]** Informing mint admins of how much they have already minted today and how much they can still mint.
 4. **[COMPLETED PARTIALLY]** Displaying all the roles that a user has and accordingly displaying forms for particular actions.
-    - The forms were not fully developed.
-    - The forms and buttons for minting are not functioning correctly.
-
+   - The roles of the user are displayed.
 
 
 # BDAToken Project Documentation
@@ -84,7 +83,6 @@ This documentation provides a detailed overview of the `BDAToken` smart contract
 
 ### Functions
 - **`mint`**: Allows minting of tokens to specified addresses within set limits.
-- **`burnAccount`**: Burns all tokens of the caller.
 - **`transfer`**: Overrides ERC20 transfer to enforce daily transfer limits.
 - **`signMint`**, **`signAddAdminMint`**, **`signRemoveAdminMint`**: Administrative functions to manage minting and mint admins.
 - **`signAddAdminRestriction`**, **`signRemoveAdminRestriction`**, **`signUpdateTransferLimit`**: Manage transfer restrictions and related admins.
