@@ -12,16 +12,6 @@ const conf = require("../config/bda_token_config");
 const url = "http://" + truffleConfig.networks.development.host + ":" + truffleConfig.networks.development.port;
 var web3 = new Web3(url);
 
-// var conf = require("../config/bda_token_config.js");
-
-const accounts_local = [{
-    address: "0x256Bc864654D5edE164D3F60aa8428415E55A616",
-    privateKey: "0x062ad970e34803f09cbedb16c2f54932fd12417d23a64623cac1e43eb6a29125"
-}, {
-    address: "0x2E22AA0E248C994863594d1a1842db87fd298821",
-    privateKey: "0x080684f113c7374488f5a45b7dfce00cb22a14769c0dda69424f55f99c36fcf9"
-}]
-
 async function expectError(promise, message) {
     try {
         await promise;
@@ -99,7 +89,7 @@ contract('TEST SUITE [ Mint ]', function (accounts) {
         assert(balance1.toNumber() === 100, "Tokens not minted");
     });
 
-    it("Mint tokens more than TMAX", async () => {
+    it("Mint tokens more than TMAX (error)", async () => {
         const balance = await token.balanceOf(accounts[0]);
         console.log("balance: ", balance.toNumber());
         // await token.mint([accounts[0]], [101], {from: accounts[0]});
@@ -111,7 +101,7 @@ contract('TEST SUITE [ Mint ]', function (accounts) {
         assert(balance1.toNumber() === 0, "Tokens minted, even TMAX exceeded");
     });
 
-    it("Mint more tokens than TMAX", async () => {
+    it("Mint more tokens than TMAX (consensus)", async () => {
         await token.signAddAdminMint(accounts[1], {from: accounts[0]});
         await token.signAddAdminMint(accounts[2], {from: accounts[0]});
         await token.signAddAdminMint(accounts[2], {from: accounts[1]});

@@ -33,7 +33,8 @@ This command start 2 container:
 npx truffle deploy --network development --reset
 ```
 
-This command also generates a new contract address. Please copy this address and update the `.env.development` file's `NEXT_PUBLIC_CONTRACT_ADDRESS` variable.
+[//]: # (This command also generates a new contract address. Please copy this address and update the `.env.development` file's `NEXT_PUBLIC_CONTRACT_ADDRESS` variable.)
+This command also generates a new contract address. Please copy this address and update the `contractAddress` variable inside `dapp/app/page.tsx` file.
 
 4. Run the tests:
 
