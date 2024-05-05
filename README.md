@@ -2,6 +2,9 @@
 
 ## Implementation of Ethereum Smart Contracts in `Solidity` and `Web3.js`
 
+
+Project Explanation [On Youtube HERE](https://youtu.be/A-S_tL-pzFk?si=mC-Ezt-f94JnHY3Z)
+
 ### Authors:
 
 - Zdenek Lapes - [lapes.zdenek@gmail.com](mailto:lapes.zdenek@gmail.com) - (xlapes02)
